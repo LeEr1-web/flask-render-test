@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center py-5">
+    <div class="alert alert-warning">
+        <h2>❌ Paiement annulé</h2>
+        <p>Votre paiement a été annulé. Vous pouvez réessayer.</p>
+    </div>
+    <a href="{{ url_for('cart_view') }}" class="btn btn-primary">Retour au panier</a>
+</div>
+{% endblock %}

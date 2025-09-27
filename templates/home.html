@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- HERO / CAROUSEL -->
+<div id="heroCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+  <div class="carousel-inner">
+    {% set hero_images = [
+         url_for('static', filename='custom/tropikshoes.jpg'),
+         url_for('static', filename='custom/Chaussure-D1OR-B22-312092.jpg')
+      ] %}
+    {% for img in hero_images %}
+      <div class="carousel-item {% if loop.first %}active{% endif %}">
+        <img src="{{ img }}" class="d-block w-100 hero-image" alt="Annonce {{ loop.index }}">
+      </div>
+    {% endfor %}
+  </div>
+  <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+  </button>
+</div>
+
+<!-- Sections -->
+<div id="quick-sections">
+  {% for key, items in sections.items() %}
+    <section class="quick-section" data-key="{{ key|lower }}" {% if not loop.first %}style="display:none"{% endif %}>
+      <!-- Quick sections controls -->
+      <div class="d-flex gap-2 align-items-center mb-3">
+        <strong>Sections rapides:</strong>
+        <div id="section-buttons" class="btn-group ms-3" role="group" aria-label="Sections rapides">
+          <button class="btn btn-outline-secondary btn-sm section-toggle active" data-target="all">Tous</button>
+          {% for key, items in sections.items() %}
+            <button class="btn btn-outline-secondary btn-sm section-toggle" data-target="{{ key|lower }}">{{ key|capitalize }}</button>
+          {% endfor %}
+        </div>
+      </div>
+      <h4 class="mb-3">{{ key|capitalize }}</h4>
+
+      {% if items %}
+        <div class="row">
+          {% for it in items %}
+            <div class="col-6 col-md-3 mb-3">
+              <div class="card h-100">
+                {% if it.image %}
+                  <img src="{{ it.image }}" class="card-img-top" alt="{{ it.name }}">
+                {% endif %}
+                <div class="card-body">
+                  <h6 class="card-title">{{ it.name }}</h6>
+                  <p class="card-text small">{{ it.price if it.price else '' }}</p>
+                  <a class="btn btn-sm btn-primary" href="{{ url_for('product') }}?path={{ it.path | urlencode }}">Voir</a>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="no-items alert alert-info">Aucun modèle trouvé pour <strong>{{ key|capitalize }}</strong>.</div>
+      {% endif %}
+    </section>
+  {% endfor %}
+</div>
+
+<!-- Petite JS pour basculer les sections rapides -->
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  const buttons = document.querySelectorAll(".section-toggle");
+  const sections = document.querySelectorAll(".quick-section");
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", function(){
+      // classes active
+      buttons.forEach(b => b.classList.remove("active"));
+      this.classList.add("active");
+      const tgt = this.dataset.target;
+      if (tgt === "all") {
+        sections.forEach(s => s.style.display = "");
+      } else {
+        sections.forEach(s => {
+          s.style.diasplay = (s.dataset.key === tgt) ? "" : "none";
+        });
+      }
+    });
+  });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Votre panier</h2>
+  
+  <!-- Messages flash -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+  
+  {% if cart %}
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Produit</th>
+            <th>Taille</th>
+            <th>Quantité</th>
+            <th>Prix unitaire</th>
+            <th>Total</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in cart %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  {% if item.product_image %}
+                    <img src="{{ item.product_image }}" alt="{{ item.product_name }}" 
+                         style="width: 60px; height: 60px; object-fit: cover; margin-right: 10px;">
+                  {% endif %}
+                  <div>
+                    <strong>{{ item.product_name }}</strong>
+                  </div>
+                </div>
+              </td>
+              <td>{{ item.size or 'Unique' }}</td>
+              <td>{{ item.qty }}</td>
+              <td>{{ "%.2f"|format(item.price) }} €</td>
+              <td>{{ "%.2f"|format(item.price * item.qty) }} €</td>
+              <td>
+                <form method="POST" action="{{ url_for('cart_remove', item_id=item.id) }}">
+                  <button type="submit" class="btn btn-danger btn-sm">🗑️ Supprimer</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" class="text-end"><strong>Total:</strong></td>
+            <td colspan="2"><strong>{{ "%.2f"|format(total) }} €</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="d-flex gap-2 mt-4">
+      <form method="POST" action="{{ url_for('cart_clear') }}">
+        <button class="btn btn-secondary" type="submit">🧹 Vider le panier</button>
+      </form>
+
+      <form method="POST" action="{{ url_for('create_checkout_session') }}">
+        <button class="btn btn-primary" type="submit">💳 Payer avec Stripe</button>
+      </form>
+    </div>
+
+  {% else %}
+    <div class="text-center py-5">
+      <p class="fs-5">Votre panier est vide.</p>
+      <a href="{{ url_for('home') }}" class="btn btn-primary">🛍️ Continuer vos achats</a>
+    </div>
+  {% endif %}
+{% endblock %}

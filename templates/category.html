@@ -1,0 +1,35 @@
+
+{% extends "base.html" %}
+{% block content %}
+  <h2>Produits pour: {{ category_path }}</h2>
+  {% if paging.total %}
+    <div class="paging">Page {{ paging.current }}{% if paging.total %} / {{ paging.total }}{% endif %}</div>
+  {% endif %}
+  {# ... en haut du fichier category.html ... #}
+
+{% if products %}
+  <div class="row">
+    {% for it in products %}
+      {% if is_hidden(it.path) %}{% continue %}{% endif %}
+      <div class="col-6 col-md-3 mb-3">
+        <div class="card h-100">
+          {% set override_img = get_override_image(it.path, request.args.get('gender')) %}
+          {% if override_img %}
+            <img src="{{ override_img }}" class="card-img-top" alt="{{ it.name }}">
+          {% elif it.image %}
+            <img src="{{ it.image }}" class="card-img-top" alt="{{ it.name }}">
+          {% endif %}
+          <div class="card-body">
+            <h6 class="card-title">{{ it.name }}</h6>
+            <p class="card-text small">{{ it.price if it.price else '' }}</p>
+            <a class="btn btn-sm btn-primary" href="{{ url_for('product') }}?path={{ it.path | urlencode }}">Voir</a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-info">Aucun produit.</div>
+{% endif %}
+
+{% endblock %}

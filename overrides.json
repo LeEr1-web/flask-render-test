@@ -1,0 +1,18 @@
+{
+
+  "/Chaussure-D1OR-B22-312092.html": {
+    "price": "99.99 €",
+    "images": [
+      "Chaussure-D1OR-B22-312092.jpg",
+      "Chaussure-D1OR-B22-312092-2.jpg",
+      "Chaussure-D1OR-B22-312092-3.jpg"
+    ]
+    },
+  "/Nike-Air-Max-Plus-2025-325542.html": {
+    "price": "99.99 €",
+    "image": "/static/custom/nike_custom.jpg"
+  },
+  "/Nike-Air-Max-Plus-2025-325541.html": {
+    "hidden": true
+  }
+}

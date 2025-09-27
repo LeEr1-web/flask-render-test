@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+  {% if product.is_category %}
+    <!-- Afficher comme une catégorie -->
+    <h2>{{ product.category_title }}</h2>
+    {% if product.products %}
+      <div class="row">
+        {% for it in product.products %}
+          <div class="col-6 col-md-3 mb-3">
+            <div class="card h-100">
+              {% if it.image %}
+                <img src="{{ it.image }}" class="card-img-top" alt="{{ it.name }}">
+              {% endif %}
+              <div class="card-body">
+                <h6 class="card-title">{{ it.name }}</h6>
+                <p class="card-text">
+                  {% if it.old_price %}
+                    <s class="text-muted">{{ it.old_price }}</s>
+                  {% endif %}
+                  <!-- CORRECTION : Afficher le prix multiplié -->
+                  <span class="fw-bold text-primary">{{ it.new_price }}</span>
+                </p>
+                <a class="btn btn-sm btn-primary" href="{{ url_for('product') }}?path={{ it.path | urlencode }}">Voir</a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="alert alert-info">Aucun produit trouvé dans cette catégorie.</div>
+    {% endif %}
+  {% else %}
+    <!-- Afficher comme un produit normal -->
+    <div class="product-detail">
+      <div class="gallery">
+        {% if product.main_img %}
+          <img src="{{ product.main_img }}" class="main-image" alt="{{ product.title }}">
+        {% endif %}
+        <div class="thumbs">
+          {% for t in product.thumbs %}
+            <img src="{{ t }}" class="thumb">
+          {% endfor %}
+        </div>
+      </div>
+      <div class="info">
+        <h2>{{ product.title }}</h2>
+        <p class="price">
+          {% if product.old_price %}
+            <span class="old">{{ product.old_price }}</span> 
+          {% endif %}
+          <!-- CORRECTION : Afficher le prix multiplié -->
+          <span class="new">{{ product.new_price }}</span>
+        </p>
+        
+        {% if product.description %}
+        <div class="description">
+          <h4>Description</h4>
+          <p>{{ product.description }}</p>
+        </div>
+        {% endif %}
+        
+        <form method="post" action="{{ url_for('cart_add') }}">
+          <input type="hidden" name="name" value="{{ product.title }}">
+          <!-- CORRECTION : Utiliser le prix multiplié pour le formulaire -->
+          <input type="hidden" name="price" value="{{ product.price_value }}">
+          <input type="hidden" name="image" value="{{ product.main_img }}">
+          <input type="hidden" name="path" value="{{ product.path }}">
+          
+          <div class="mb-3">
+            <label class="form-label"><strong>Taille</strong></label>
+            <select name="size" class="form-select">
+              {% for s in product.sizes %}
+                <option value="{{ s }}">{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label"><strong>Quantité</strong></label>
+            <select name="qty" class="form-select">
+              {% for q in product.qty_options %}
+                <option value="{{ q }}">{{ q }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <button class="btn btn-success btn-lg" type="submit">🛒 Ajouter au panier</button>
+          <a href="{{ url_for('cart_view') }}" class="btn btn-primary btn-lg">📋 Voir le panier</a>
+        </form>
+      </div>
+    </div>
+
+    {% if product.related %}
+    <div class="mt-5">
+      <h3>Produits similaires</h3>
+      <div class="products-grid">
+        {% for r in product.related %}
+          <div class="product-card">
+            {% if r.image %}<img src="{{ r.image }}" alt="{{ r.name }}">{% endif %}
+            <h5>{{ r.name }}</h5>
+            <p class="price">
+              <!-- CORRECTION : Afficher le prix multiplié -->
+              <span class="new-price">{{ r.new_price }}</span>
+              {% if r.old_price and r.old_price != r.new_price %}
+              <span class="old-price"><s>{{ r.old_price }}</s></span>
+              {% endif %}
+            </p>
+            <a class="btn btn-primary" href="{{ url_for('product') }}?path={{ r.path | urlencode }}">Voir</a>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  {% endif %}
+{% endblock %}
