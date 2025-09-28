@@ -1,115 +1,315 @@
 {% extends "base.html" %}
 {% block content %}
   {% if product.is_category %}
-    <!-- Afficher comme une catégorie -->
-    <h2>{{ product.category_title }}</h2>
+    <!-- Afficher comme une catégorie COMPLÈTE -->
+    
+    <!-- Fil d'Ariane -->
+    {% if product.breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Accueil</a></li>
+        {% for item in product.breadcrumb %}
+          <li class="breadcrumb-item">
+            <a href="{{ url_for('product') }}?path={{ item.path | urlencode }}">{{ item.text }}</a>
+          </li>
+        {% endfor %}
+        <li class="breadcrumb-item active">{{ product.category_title }}</li>
+      </ol>
+    </nav>
+    {% endif %}
+
+    <!-- Titre de la catégorie -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>{{ product.category_title }}</h2>
+      {% if product.paging.total_items %}
+        <span class="text-muted">{{ product.paging.total_items }} produits</span>
+      {% endif %}
+    </div>
+
+    <!-- Liens prohref (sous-catégories) -->
+    {% if product.prohref_links %}
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">Produits similaires</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+          {% for link in product.prohref_links %}
+            <a href="{{ url_for('product') }}?path={{ link.path | urlencode }}" 
+               class="btn btn-outline-primary btn-sm">
+              {{ link.title }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Produits -->
     {% if product.products %}
       <div class="row">
         {% for it in product.products %}
-          <div class="col-6 col-md-3 mb-3">
-            <div class="card h-100">
+          <div class="col-6 col-md-3 mb-4">
+            <div class="card h-100 product-card">
               {% if it.image %}
-                <img src="{{ it.image }}" class="card-img-top" alt="{{ it.name }}">
+                <img src="{{ it.image }}" class="card-img-top product-image" alt="{{ it.name }}" loading="lazy">
               {% endif %}
-              <div class="card-body">
+              <div class="card-body d-flex flex-column">
                 <h6 class="card-title">{{ it.name }}</h6>
-                <p class="card-text">
-                  {% if it.old_price %}
-                    <s class="text-muted">{{ it.old_price }}</s>
-                  {% endif %}
-                  <!-- CORRECTION : Afficher le prix multiplié -->
-                  <span class="fw-bold text-primary">{{ it.new_price }}</span>
-                </p>
-                <a class="btn btn-sm btn-primary" href="{{ url_for('product') }}?path={{ it.path | urlencode }}">Voir</a>
+                <div class="mt-auto">
+                  <p class="card-text">
+                    {% if it.old_price %}
+                      <s class="text-muted small">{{ it.old_price }}</s>
+                    {% endif %}
+                    <span class="fw-bold text-primary d-block">{{ it.new_price }}</span>
+                    {% if it.economy %}
+                      <span class="text-success small">{{ it.economy }}</span>
+                    {% endif %}
+                  </p>
+                  <a class="btn btn-primary btn-sm w-100" 
+                     href="{{ url_for('product') }}?path={{ it.path | urlencode }}">
+                    Voir le produit
+                  </a>
+                </div>
               </div>
             </div>
           </div>
         {% endfor %}
       </div>
     {% else %}
-      <div class="alert alert-info">Aucun produit trouvé dans cette catégorie.</div>
-    {% endif %}
-  {% else %}
-    <!-- Afficher comme un produit normal -->
-    <div class="product-detail">
-      <div class="gallery">
-        {% if product.main_img %}
-          <img src="{{ product.main_img }}" class="main-image" alt="{{ product.title }}">
-        {% endif %}
-        <div class="thumbs">
-          {% for t in product.thumbs %}
-            <img src="{{ t }}" class="thumb">
-          {% endfor %}
-        </div>
+      <div class="alert alert-info text-center">
+        <h5>Aucun produit trouvé dans cette catégorie</h5>
+        <p>Essayez de modifier vos critères de recherche ou parcourez nos autres catégories.</p>
       </div>
-      <div class="info">
-        <h2>{{ product.title }}</h2>
-        <p class="price">
-          {% if product.old_price %}
-            <span class="old">{{ product.old_price }}</span> 
-          {% endif %}
-          <!-- CORRECTION : Afficher le prix multiplié -->
-          <span class="new">{{ product.new_price }}</span>
-        </p>
-        
-        {% if product.description %}
-        <div class="description">
-          <h4>Description</h4>
-          <p>{{ product.description }}</p>
-        </div>
+    {% endif %}
+
+    <!-- Pagination complète -->
+    {% if product.paging and product.paging.total > 1 %}
+    <nav aria-label="Pagination" class="mt-5">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <!-- Texte d'information -->
+        {% if product.paging.display_text %}
+          <div class="text-muted small">
+            {{ product.paging.display_text }}
+          </div>
         {% endif %}
         
-        <form method="post" action="{{ url_for('cart_add') }}">
-          <input type="hidden" name="name" value="{{ product.title }}">
-          <!-- CORRECTION : Utiliser le prix multiplié pour le formulaire -->
-          <input type="hidden" name="price" value="{{ product.price_value }}">
-          <input type="hidden" name="image" value="{{ product.main_img }}">
-          <input type="hidden" name="path" value="{{ product.path }}">
-          
-          <div class="mb-3">
-            <label class="form-label"><strong>Taille</strong></label>
-            <select name="size" class="form-select">
-              {% for s in product.sizes %}
-                <option value="{{ s }}">{{ s }}</option>
-              {% endfor %}
-            </select>
+        <!-- Pagination Bootstrap -->
+        <ul class="pagination mb-0">
+          <!-- Précédent -->
+          {% if product.paging.has_prev %}
+            <li class="page-item">
+              <a class="page-link" 
+                 href="{{ url_for('product') }}?path={{ product.paging.prev_url | urlencode }}">
+                &laquo; Précédent
+              </a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link">&laquo; Précédent</span>
+            </li>
+          {% endif %}
+
+          <!-- Pages -->
+          {% for page_num in product.paging.pages %}
+            {% if page_num <= product.paging.total and page_num <= 10 %}
+              <li class="page-item {% if page_num == product.paging.current %}active{% endif %}">
+                <a class="page-link" 
+                   href="{{ url_for('product') }}?path={{ product.path | urlencode }}&page={{ page_num }}">
+                  {{ page_num }}
+                </a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          <!-- Suivant -->
+          {% if product.paging.has_next %}
+            <li class="page-item">
+              <a class="page-link" 
+                 href="{{ url_for('product') }}?path={{ product.paging.next_url | urlencode }}">
+                Suivant &raquo;
+              </a>
+            </li>
+          {% else %}
+            <li class="page-item disabled">
+              <span class="page-link">Suivant &raquo;</span>
+            </li>
+          {% endif %}
+        </ul>
+
+        <!-- Sélecteur de page -->
+        {% if product.paging.pages and product.paging.pages|length > 1 %}
+        <div class="ms-3">
+          <select class="form-select form-select-sm" 
+                  onchange="window.location.href='{{ url_for('product') }}?path={{ product.path | urlencode }}&page=' + this.value">
+            {% for page_num in product.paging.pages %}
+              {% if page_num <= product.paging.total %}
+                <option value="{{ page_num }}" {% if page_num == product.paging.current %}selected{% endif %}>
+                  Page {{ page_num }}
+                </option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+      </div>
+    </nav>
+    {% endif %}
+
+  {% else %}
+    <!-- Afficher comme un produit normal AMÉLIORÉ -->
+    
+    <!-- Fil d'Ariane -->
+    {% if product.breadcrumb %}
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('home') }}">Accueil</a></li>
+        {% for item in product.breadcrumb %}
+          <li class="breadcrumb-item">
+            <a href="{{ url_for('product') }}?path={{ item.path | urlencode }}">{{ item.text }}</a>
+          </li>
+        {% endfor %}
+        <li class="breadcrumb-item active">{{ product.title }}</li>
+      </ol>
+    </nav>
+    {% endif %}
+
+    <div class="product-detail">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="gallery">
+            {% if product.main_img %}
+              <img src="{{ product.main_img }}" class="main-image img-fluid rounded" alt="{{ product.title }}">
+            {% endif %}
           </div>
-          
-          <div class="mb-3">
-            <label class="form-label"><strong>Quantité</strong></label>
-            <select name="qty" class="form-select">
-              {% for q in product.qty_options %}
-                <option value="{{ q }}">{{ q }}</option>
-              {% endfor %}
-            </select>
+        </div>
+        <div class="col-md-6">
+          <div class="info">
+            <h2>{{ product.title }}</h2>
+            <p class="price fs-4">
+              {% if product.old_price %}
+                <span class="old text-muted"><s>{{ product.old_price }}</s></span> 
+              {% endif %}
+              <span class="new text-primary fw-bold">{{ product.new_price }}</span>
+            </p>
+            
+            {% if product.description %}
+            <div class="description mt-4">
+              <h4>Description</h4>
+              <p class="text-muted">{{ product.description }}</p>
+            </div>
+            {% endif %}
+            
+            <form method="post" action="{{ url_for('cart_add') }}" class="mt-4">
+              <input type="hidden" name="name" value="{{ product.title }}">
+              <input type="hidden" name="price" value="{{ product.price_value }}">
+              <input type="hidden" name="image" value="{{ product.main_img }}">
+              <input type="hidden" name="path" value="{{ product.path }}">
+              
+              <div class="mb-3">
+                <label class="form-label"><strong>Taille</strong></label>
+                <select name="size" class="form-select form-select-lg" required>
+                  {% for s in product.sizes %}
+                    <option value="{{ s }}">{{ s }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label"><strong>Quantité</strong></label>
+                <select name="qty" class="form-select form-select-lg" required>
+                  {% for q in product.qty_options %}
+                    <option value="{{ q }}">{{ q }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              
+              <div class="d-grid gap-2 d-md-flex">
+                <button class="btn btn-success btn-lg" type="submit">🛒 Ajouter au panier</button>
+                <a href="{{ url_for('cart_view') }}" class="btn btn-primary btn-lg">📋 Voir le panier</a>
+              </div>
+            </form>
           </div>
-          
-          <button class="btn btn-success btn-lg" type="submit">🛒 Ajouter au panier</button>
-          <a href="{{ url_for('cart_view') }}" class="btn btn-primary btn-lg">📋 Voir le panier</a>
-        </form>
+        </div>
       </div>
     </div>
 
+    <!-- Liens prohref pour les produits similaires -->
+    {% if product.prohref_links %}
+    <div class="mt-5">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Produits similaires</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2">
+            {% for link in product.prohref_links %}
+              <a href="{{ url_for('product') }}?path={{ link.path | urlencode }}" 
+                 class="btn btn-outline-primary btn-sm">
+                {{ link.title }}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Produits liés -->
     {% if product.related %}
     <div class="mt-5">
-      <h3>Produits similaires</h3>
-      <div class="products-grid">
+      <h3>Produits apparentés</h3>
+      <div class="row">
         {% for r in product.related %}
-          <div class="product-card">
-            {% if r.image %}<img src="{{ r.image }}" alt="{{ r.name }}">{% endif %}
-            <h5>{{ r.name }}</h5>
-            <p class="price">
-              <!-- CORRECTION : Afficher le prix multiplié -->
-              <span class="new-price">{{ r.new_price }}</span>
-              {% if r.old_price and r.old_price != r.new_price %}
-              <span class="old-price"><s>{{ r.old_price }}</s></span>
+          <div class="col-6 col-md-3 mb-3">
+            <div class="card h-100">
+              {% if r.image %}
+                <img src="{{ r.image }}" class="card-img-top" alt="{{ r.name }}" style="height: 200px; object-fit: cover;">
               {% endif %}
-            </p>
-            <a class="btn btn-primary" href="{{ url_for('product') }}?path={{ r.path | urlencode }}">Voir</a>
+              <div class="card-body d-flex flex-column">
+                <h6 class="card-title">{{ r.name }}</h6>
+                <div class="mt-auto">
+                  <p class="card-text">
+                    <span class="new-price fw-bold text-primary">{{ r.new_price }}</span>
+                    {% if r.old_price and r.old_price != r.new_price %}
+                    <span class="old-price"><s class="text-muted">{{ r.old_price }}</s></span>
+                    {% endif %}
+                  </p>
+                  <a class="btn btn-primary btn-sm w-100" 
+                     href="{{ url_for('product') }}?path={{ r.path | urlencode }}">
+                    Voir
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         {% endfor %}
       </div>
     </div>
     {% endif %}
   {% endif %}
+
+  <!-- Style CSS pour améliorer l'affichage -->
+  <style>
+    .product-card {
+      transition: transform 0.2s ease-in-out;
+    }
+    .product-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .product-image {
+      height: 200px;
+      object-fit: cover;
+    }
+    .breadcrumb {
+      background-color: #f8f9fa;
+      padding: 0.75rem 1rem;
+      border-radius: 0.375rem;
+    }
+    .main-image {
+      max-height: 500px;
+      object-fit: contain;
+    }
+  </style>
 {% endblock %}
